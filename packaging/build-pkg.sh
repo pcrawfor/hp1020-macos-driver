@@ -11,18 +11,23 @@ OUT=dist
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-for t in aarch64-apple-darwin x86_64-apple-darwin; do
-    cargo build --release --quiet --target "$t"
-done
+cargo build --release --quiet
+#for t in aarch64-apple-darwin x86_64-apple-darwin; do
+#    cargo build --release --quiet --target "$t"
+#done
 cargo test --release --quiet >/dev/null
 
 ROOT="$WORK/root"
 mkdir -p "$ROOT/usr/libexec/cups/filter" "$ROOT/usr/libexec/cups/backend" \
          "$ROOT/Library/Printers/PPDs/Contents/Resources" "$ROOT/Library/Printers/hp1020/firmware"
+#for bin in rastertozjs hp1020; do
+#    lipo -create -output "$WORK/$bin" \
+#        "target/aarch64-apple-darwin/release/$bin" "target/x86_64-apple-darwin/release/$bin"
+#done
 for bin in rastertozjs hp1020; do
-    lipo -create -output "$WORK/$bin" \
-        "target/aarch64-apple-darwin/release/$bin" "target/x86_64-apple-darwin/release/$bin"
+    cp "target/release/$bin" "$WORK/$bin"
 done
+
 install -m 0755 "$WORK/rastertozjs" "$ROOT/usr/libexec/cups/filter/rastertozjs"
 # 0700 root-owned: CUPS runs the backend as root, which owns the USB interface.
 install -m 0700 "$WORK/hp1020" "$ROOT/usr/libexec/cups/backend/hp1020"
